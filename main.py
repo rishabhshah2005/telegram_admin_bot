@@ -13,6 +13,7 @@ INVITE_LINK = "https://t.me/+_qB6mDn6etMwMmQ9"
 
 dp = Dispatcher()
 lock = asyncio.Lock()
+lock2 = asyncio.Lock()
 
 async def scheduled_task(bot: Bot):
     while True:
@@ -36,21 +37,22 @@ async def write_csv_data(data: list[list], filename, mode='a'):
             writer.writerows(data)
 
 async def remove_users(bot: Bot):
-    users = await get_csv_data("data.csv")
-    now = t.time()
-    removed = []
-    try:
-        for user in users:
-            if now>(float(user[2])+TIME_LIMIT):
-                await bot.ban_chat_member(user[0], user[1])
-                print("Removed: "+ user[0] +" "+ user[1])
-                await bot.send_message(user[1], MESSAGE)
-                users.remove(user)
-                removed.append([user[1], user[3]])
-        await write_csv_data(users, "data.csv", mode='w')
-        await write_csv_data(removed, "removed_users.csv")
-    except Exception as e:
-        print("Error in removing: "+e)
+    async with lock2:
+        users = await get_csv_data("data.csv")
+        now = t.time()
+        removed = []
+        try:
+            for user in users:
+                if now>(float(user[2])+TIME_LIMIT):
+                    await bot.ban_chat_member(user[0], user[1])
+                    print("Removed: "+ user[0] +" "+ user[1])
+                    await bot.send_message(user[1], MESSAGE)
+                    users.remove(user)
+                    removed.append([user[1], user[3]])
+            await write_csv_data(users, "data.csv", mode='w')
+            await write_csv_data(removed, "removed_users.csv")
+        except Exception as e:
+            print("Error in removing: "+e)
 
 @dp.chat_join_request()
 async def approve_handler(chat_join_request: types.ChatJoinRequest, bot: Bot):
@@ -59,7 +61,8 @@ async def approve_handler(chat_join_request: types.ChatJoinRequest, bot: Bot):
             chat_id=chat_join_request.chat.id,
             user_id=chat_join_request.from_user.id
         )
-        await write_csv_data([[chat_join_request.chat.id, chat_join_request.from_user.id, t.time(), chat_join_request.from_user.username]], "data.csv")
+        async with lock2:
+            await write_csv_data([[chat_join_request.chat.id, chat_join_request.from_user.id, t.time(), chat_join_request.from_user.username]], "data.csv")
         
         print(f"Approved join request from user_id: {chat_join_request.from_user.id} chat_id: {chat_join_request.chat.id.__str__()}")
     except Exception as e:
