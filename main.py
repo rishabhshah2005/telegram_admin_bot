@@ -6,10 +6,10 @@ import time as t
 from datetime import datetime, time
 
 
-TOKEN = "7436533994:AAGvvnip8IQEY8lo_u7_pmBRtaNb443A6tY"
+TOKEN = "TOKEN"
 TIME_LIMIT = 7*24*60*60 # in seconds
 MESSAGE = "You have been removed from the group testChannel" # The message the bot will send on removing a member
-INVITE_LINK = "https://t.me/+_qB6mDn6etMwMmQ9"
+INVITE_LINK = "INVITE LINK"
 
 dp = Dispatcher()
 lock = asyncio.Lock()
